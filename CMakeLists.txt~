@@ -117,7 +117,7 @@ add_executable(local_controller src/local_controller.cpp)
 target_link_libraries(global_controller
   ${catkin_LIBRARIES}
 )
-target_link_libraries(local_controller 
+target_link_libraries(trajectory_controller_node
   ${catkin_LIBRARIES}
 )
 
