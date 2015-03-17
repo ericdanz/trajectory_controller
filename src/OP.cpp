@@ -81,3 +81,13 @@ computeHessian(double * Q[], int N, int r, double t){
     }
   }
 }
+
+double getValueFromPolynomial(std::vector<double> alphas, double time){
+
+  double value = 0.0;
+  for(int i = 0; i < size(alphas); i++){
+    value += alphas[i] * pow(t,i);
+  }
+
+  return value;
+}
