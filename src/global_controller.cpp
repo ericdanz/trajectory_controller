@@ -20,19 +20,26 @@ double getValueFromPolynomial(std::vector<double> alphas, double time){
 
 global_controller::global_controller(){
   
-  //Params
-  //type of drive (omni or diff)
+  //param
+  //distance step for resolution
 
-  local_pub = nh.advertise<sensor_msgs::JointState>("/local_plan", 1000);
+  local_pub = nh.advertise<sensor_msgs::JointState>("/Plan", 1000, true);
   waypoints_sub = nh.subscribe("/waypoints", 1000, &global_controller::update_waypoints, this);
 
-  tf::TransformListener tf_listener;
-
+  cur_robot_pose = yaw = 0 and position = 0,0
+ 
 }
 
-global_controller::update_waypoints(oddbot_msgs){
+global_controller::update_waypoints(nav_msgs::Path msg){
+  bool goal_changed = false;
 
-  	
+  if(goal_waypoints.size() == msg->poses.size()){
+    for(int i = 0; i < msg->poses.size(); i++){
+      //compare the waypointsst 
+    }
+  } else {
+    goal_changed = true;
+  }	
 
   //update path if goal position changed
   if(goal_changed){
@@ -56,6 +63,13 @@ global_controller::create_path(){
   x_alphas.clear();
   y_alphas.clear();
   h_alphas.clear():
+
+  double x_start = cur_robot_pose.pose.position.x;
+  double y_start = cur_robot_pose.pose.position.y;
+
+  double x_end = goal_waypoints.front().pose.position.x;
+  double y_end = goal_waypoints.front().pose.position.y;
+
   x_alphas[0].push_back(x_start);
   x_alphas[0].push_back(x_end - x_start);	  
   y_alphas[0].push_back(y_start);
@@ -63,8 +77,7 @@ global_controller::create_path(){
   h_alphas[0].push_back(atan2(y_end - y_start,x_end - x_start));
 
   //calculate the new path
-  nav_msgs::Path plan;
-
+  plan.clear();
   //add the robots current location to the start of the path
   plan.push_back(cur_robot_pose);
 
@@ -89,10 +102,9 @@ global_controller::create_path(){
 
       plan.push_back(next_pose);
     }
+    //add the goal to the end of the path 
+    plan.push_back(goal_waypoints[i]);
   }
-
-  //add the goal to the end of the path 
-  plan.push_back(goal_waypoints.back());
 
   //publish the new path
 
@@ -100,7 +112,21 @@ global_controller::create_path(){
 
 int main(int argv, char * arc[]){
 
-  ros::spin();
+  ros::init(argc, argv, "global_controller");
+
+  global_controller gc = global_controller();
+  
+  ROS_INFO("global path planner started!");	
+
+  ros::Rate loop_rate(10);
+
+  while (ros::ok())
+  {
+    ros::spinOnce();
+    loop_rate.sleep();
+  }
+
+  return 0;
 
 }
 

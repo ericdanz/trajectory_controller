@@ -15,12 +15,14 @@ class global_controller {
     set_goal();
  
   private:
-    update_path();
-    publish_path();
+    create_path();
+    update_waypoints();
     nav_msgs::Path goal_waypoints;
+    tf::TransformListener tf_listener;
     
-    double time_increment;
+    double step;
     geometry_msgs::PoseStamped cur_robot_pose;
+    nav_msgs::Path plan;
 
     //alphas start with the constant term and increase 
     //ie a[0] + a[1]*t + a[2]*t^2 ...
