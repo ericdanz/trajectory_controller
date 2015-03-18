@@ -78,8 +78,9 @@ void localController::publishMessage(ros::Publisher *pub_message)
     }
 
   //make sure closestIndex isn't the first point
-  if (!closestIndex) closestIndex = 1;
+  if (!closestIndex || closestIndex > 100) closestIndex = 1;
    ROS_INFO("Closest index %d",closestIndex);
+   ROS_INFO("size %d :: %d", dVel.size(), dYaw.size());
   //figure out the desired twist at the desired point
   double xVel = (dVel[closestIndex-1] + dVel[closestIndex]) /2;
   double aVel = (dYaw[closestIndex-1] - dYaw[closestIndex])/timeStep;
@@ -91,15 +92,38 @@ void localController::publishMessage(ros::Publisher *pub_message)
   //ydiff
   double ydiff = pathWindow.poses[closestIndex].pose.position.y - currentPose.position.y;
   //desired velocity along the line
-  double desVel =  sqrt(xdiff*xdiff + ydiff*ydiff)/timeStep ;
+  long double desVel = xdiff/fabs(xdiff) * sqrt(xdiff*xdiff + ydiff*ydiff);///timeStep ;
+  ROS_INFO("xdiff %f", xdiff);
+  ROS_INFO("ydiff %f", ydiff);
+  ROS_INFO("sqrt %f", sqrt(xdiff*xdiff + ydiff*ydiff));
+  ROS_INFO("xdiff %f", xdiff/fabs(xdiff));
+  //ROS_INFO("path x : %f", pathWindow.poses[closestIndex].pose.position.x);
+  //ROS_INFO("currentPose x: %f", currentPose.position.x);
+  //ROS_INFO("path y : %f", pathWindow.poses[closestIndex].pose.position.y);
+  //ROS_INFO("currentPose y: %f", currentPose.position.y);
+
+
+  ROS_INFO("desiredVelocity %f", desVel);
   //current yaw
   double roll,pitch,yaw;
   //currentPose.orientation.getRPY(roll,pitch,yaw);
+  tf::Quaternion q = tf::Quaternion(currentPose.orientation.x,currentPose.orientation.y,currentPose.orientation.z,currentPose.orientation.w);
+  tf::Matrix3x3 m(q);
+
+  m.getRPY(roll,pitch,yaw);
+  ROS_INFO("current yaw %f",yaw);
   //desired yaw to match the line 
-  double desAng =  (atan(ydiff/xdiff)-yaw) / timeStep; 
+  double desAng =  (atan2(ydiff,xdiff)-yaw); 
   //average them to create the twist to publish 
-  msg.linear.x = (desVel + xVel) / 2; 
-  msg.angular.z = (desAng + aVel) / 2;
+  msg.linear.x = (desVel + xVel) / 2;
+  if(msg.linear.x > 0.1){
+    msg.linear.x = 0.1;
+  } else if(msg.linear.x < -0.1){
+    msg.linear.x = -0.1;
+  } 
+  msg.angular.z = 0.1*((desAng + aVel) / 2);
+  
+  msg.angular.z = 0.0;
   pub_message->publish(msg);
 
 }
@@ -127,7 +151,7 @@ void localController::odomUpdateCallback(const nav_msgs::Odometry::ConstPtr &msg
 
 int main(int argc, char **argv)
 {
-  ros::init(argc, argv, "locom");
+  ros::init(argc, argv, "locol_controller");
   ros::NodeHandle nh;
 
   localController *local_controller = new localController();
