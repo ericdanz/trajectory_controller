@@ -25,6 +25,7 @@ void localController::publishMessage(ros::Publisher *pub_message)
   //Go through the path, find all poses within 1m of currentPose
   nav_msgs::Path pathWindow;
   double timeStep = .2;
+  bool alreadyLast = false;
   std::vector<double> dVel,dYaw;
   double closestDist = 10000;
   int closestIndex;
@@ -76,10 +77,14 @@ void localController::publishMessage(ros::Publisher *pub_message)
 	
 
     }
-
+   dVel.push_back(0.0);
+   dYaw.push_back(dYaw.back());
   //make sure closestIndex isn't the first point
   if (!closestIndex || closestIndex > 100) closestIndex = 1;
-   ROS_INFO("Closest index %d",closestIndex);
+  if (closestIndex == pathWindow.poses.size() -1 && !alreadyLast) alreadyLast = true;
+  else if(closestIndex == pathWindow.poses.size() -1) closestIndex = pathWindow.poses.size();
+
+  ROS_INFO("Closest index %d",closestIndex);
    ROS_INFO("size %d :: %d", dVel.size(), dYaw.size());
   //figure out the desired twist at the desired point
   double xVel = (dVel[closestIndex-1] + dVel[closestIndex]) /2;
