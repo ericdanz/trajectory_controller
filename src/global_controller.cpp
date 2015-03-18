@@ -166,7 +166,7 @@ void global_controller::create_path(){
     }
     //add the goal to the end of the path 
     plan.poses.push_back(goal_waypoints.poses[i]);
-    ROS_INFO("Created path for polynomial %d " , i);//out of %d", i, x_alphas.size());
+    ROS_INFO("Created path for polynomial %d", i);
   }
   ROS_INFO("Created the Path and Publishing");
   //publish the new path

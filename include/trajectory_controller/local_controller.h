@@ -16,6 +16,7 @@
 #include "tf/transform_broadcaster.h"
 #include "nav_msgs/Odometry.h"
 #include "nav_msgs/Path.h"
+#include "tf/LinearMath/Transform.h"
 
 #include "oddbot_msgs/MotorCommand.h"
 #include <cmath> 
