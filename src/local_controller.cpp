@@ -24,8 +24,8 @@ void localController::publishMessage(ros::Publisher *pub_message)
 {
   //Go through the path, find all poses within 1m of currentPose
   nav_msgs::Path pathWindow;
-  double timeStep = 0.01;
-  std::vector<int> dVel,dYaw;
+  double timeStep = .2;
+  std::vector<double> dVel,dYaw;
   double closestDist = 10000;
   int closestIndex;
   geometry_msgs::Twist atDes, toDes;
@@ -40,6 +40,7 @@ void localController::publishMessage(ros::Publisher *pub_message)
       if (abs(currentPath.poses[i].pose.position.x - currentPose.position.x) < 1 && abs(currentPath.poses[i].pose.position.y - currentPose.position.y) < 1)
 	{
 	  pathWindow.poses.push_back(currentPath.poses[i]);
+	  // ROS_INFO("Pushed a new path onto the path window %d",i);
 	}
 
 
@@ -58,6 +59,7 @@ void localController::publishMessage(ros::Publisher *pub_message)
 	      closestDist = poseDiff;
 	      closestIndex = i;
 	    }
+       
 
 	  //xdiff
 	  double xdiff = pathWindow.poses[i+1].pose.position.x - pathWindow.poses[i].pose.position.x;
@@ -70,17 +72,18 @@ void localController::publishMessage(ros::Publisher *pub_message)
 	  //desired yaw to match the line
 	  dYaw.push_back( atan(ydiff/xdiff) );
 
-	  ROS_INFO("desired yaw:  %d",dYaw.back());
+	  //	  ROS_INFO("desired yaw:  %d",dYaw.back());
 	
 
     }
 
   //make sure closestIndex isn't the first point
   if (!closestIndex) closestIndex = 1;
-  
+   ROS_INFO("Closest index %d",closestIndex);
   //figure out the desired twist at the desired point
   double xVel = (dVel[closestIndex-1] + dVel[closestIndex]) /2;
   double aVel = (dYaw[closestIndex-1] - dYaw[closestIndex])/timeStep;
+  ROS_INFO("desired linear Vel: %f",xVel);
   ROS_INFO("desired angular Vel: %f",aVel);
   //figure out the twist to get to the desired point
   //xdiff
@@ -131,12 +134,12 @@ int main(int argc, char **argv)
   ros::Publisher pub = nh.advertise<geometry_msgs::Twist>("/cmd_vel",10);
   ros::Subscriber odom_sub = nh.subscribe("/odom",1000,&localController::odomUpdateCallback,local_controller);
   ros::Subscriber path_sub = nh.subscribe("/plan",1000,&localController::pathMessageCallback,local_controller);
- 
+  ros::Rate r(10);
 
   while(nh.ok())
     {
       local_controller->publishMessage(&pub);
-
+      r.sleep();
       ros::spinOnce();
     }
 
